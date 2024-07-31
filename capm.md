@@ -129,3 +129,19 @@ df<- df%>%
 model <- lm(AMD_Excess_returns~ GSPC_Excess_returns, data=df)
 summary(model)
 ```
+#### Interpretation
+
+What is your \(\beta\)? Is AMD more volatile or less volatile than the market?
+
+**Answer:**
+The beta is 1.5700073. Since beta is greater than 1, AMD is more volatile than the market.This means that when there is a 1% change in S&P500, AMD returns change by approximately 1.57%. 
+
+#### Plotting the CAPM Line
+Plot the scatter plot of AMD vs. S&P 500 excess returns and add the CAPM regression line.
+
+```{r plot}
+ggplot(df,aes(x=GSPC_Excess_returns, y = AMD_Excess_returns))+
+  geom_point()+
+  geom_smooth(method="lm", se=TRUE)+
+  labs(title="Relationship between AMD Excess Returns and S&P500 Excess Returns",x="S&P500 Excess Returns" , y = "AMD Excess Returns")
+```
