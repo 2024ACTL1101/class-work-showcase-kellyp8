@@ -70,16 +70,42 @@ previous_price <- 0
 share_size <- 100
 accumulated_shares <- 0
 
+# Implement three scenarios. First scenario is buying shares on the first day when previous price is 0, second scenario is buying when price today is less than previous price, third scenario is on the last day of trading when you sell the shares.
 for (i in 1:nrow(amd_df)) {
-# Fill your code here
-}
+#buying on the first day of trading
+  if (previous_price==0){
+    amd_df$trade_type[i]<- "buy"
+    amd_df$costs_proceeds[i]<- -amd_df$close[i]*share_size
+    accumulated_shares<- share_size  }
+  
+#when price today is lesser than previous price  
+  if (amd_df$close[i]<previous_price)
+    {amd_df$trade_type[i]<-"buy"
+    amd_df$costs_proceeds[i]<- -amd_df$close[i]*share_size
+    accumulated_shares<- accumulated_shares +share_size}
+  
+#on the last day you sell the shares
+  if (i== nrow(amd_df)){
+    amd_df$trade_type[i]<-"sell"
+    amd_df$costs_proceeds[i] <- amd_df$close[i]*accumulated_shares
+    accumulated_shares<- 0}
+   
+    previous_price<- amd_df$close[i]
+    amd_df$accumulated_shares[i]<-accumulated_shares
+  }
+print(amd_df)
+
 ```
 
 
 ### Step 3: Customize Trading Period
 - Define a trading period you wanted in the past five years 
 ```r
-# Fill your code here
+#defining the dates I chose
+start_date <- as.Date("2021-12-17")
+end_date <- as.Date("2023-06-29")
+amd_df<- subset(amd_df,date >=start_date & date <= end_date)
+
 ```
 
 
@@ -90,8 +116,20 @@ After running your algorithm, check if the trades were executed as expected. Cal
 - Invested Capital: Calculate the total capital invested. This is equal to the sum of the 'costs_proceeds' values for all 'buy' transactions. Since these entries are negative (representing money spent), you should take the negative sum of these values to reflect the total amount invested.
 - ROI Formula: $$\text{ROI} = \left( \frac{\text{Total Profit or Loss}}{\text{Total Capital Invested}} \right) \times 100$$
 
-```r
-# Fill your code here
+```{r}
+# Calculation of total profit or loss
+total_profit_or_loss <- sum(amd_df$costs_proceeds, na.rm = TRUE)
+# Calculation of total capital invested
+total_capital_invested<- -sum(amd_df$costs_proceeds[amd_df$trade_type =="buy"],na.rm= TRUE)
+#Calculation of ROI
+ROI<- 100*(total_profit_or_loss/total_capital_invested)
+  
+print("the total profit/loss is" )
+print(total_profit_or_loss)
+print("the total capital invested is")
+print(total_capital_invested)
+print("the ROI is")
+print(ROI) 
 ```
 
 ### Step 5: Profit-Taking Strategy or Stop-Loss Mechanisum (Choose 1)
@@ -100,7 +138,58 @@ After running your algorithm, check if the trades were executed as expected. Cal
 
 
 ```r
-# Fill your code here
+# Setting the stop loss percentage
+stop_loss<- 0.30
+
+previous_price <- 0
+share_size <- 100
+accumulated_shares <- 0
+average_purchase_price<-0
+amd_df$trade_type <- NA
+amd_df$costs_proceeds <- NA  
+amd_df$accumulated_shares <- 0 
+
+#code from step 2 trading algorithm and another condition of stop loss mechanism implementation where half of shares sold when stock falls by 30% from average purchase price
+for (i in 1:nrow(amd_df)) {
+#buying on first day  
+  if (previous_price==0){
+    amd_df$trade_type[i]<- "buy"
+    amd_df$costs_proceeds[i]<- -amd_df$close[i] * share_size
+    accumulated_shares<- share_size 
+    average_purchase_price<- -amd_df$close[i]}
+  
+#buy when price today less than previous price  
+  if (amd_df$close[i]<previous_price)
+    {amd_df$trade_type[i]<-"buy"
+    amd_df$costs_proceeds[i]<- -amd_df$close[i]*share_size
+    accumulated_shares<- accumulated_shares +share_size
+    average_purchase_price<-(-amd_df$close[i]*share_size)/accumulated_shares}
+#implement stop loss mechanism  
+  if (amd_df$close[i]< average_purchase_price*(1-stop_loss) )
+    {accumulated_shares<- 1/2*accumulated_shares
+    amd_df$costs_proceeds[i]<-half_accumulated_shares*-amd_df$close[i]
+    amd_df$trade_type<-"sell"}
+    accumulated_shares<- accumulated_shares - 1/2*accumulated_shares
+    
+#sell on last day  
+  if (i== nrow(amd_df)){
+    amd_df$trade_type[i]<-"sell"
+    amd_df$costs_proceeds[i] <-amd_df$close[i]*accumulated_shares
+    accumulated_shares<- 0}
+  
+    previous_price<- amd_df$close[i]
+    amd_df$accumulated_shares[i]<-accumulated_shares }
+#calculate updated profit and ROI and capital invested
+total_profit_or_loss_after_strategy<-sum(amd_df$costs_proceeds, na.rm= TRUE)
+total_capital_invested_after_strategy<- -sum(amd_df$costs_proceeds[amd_df$costs_proceeds<0], na.rm= TRUE)
+ROI_after_strategy<- (total_profit_or_loss_after_strategy/total_capital_invested_after_strategy)*100
+print("the total profit after strategy employed is:")
+print(total_profit_or_loss_after_strategy)
+print("the total capital invested after strategy employed is:")
+print(total_capital_invested_after_strategy)
+print("the ROI is:")
+print(ROI_after_strategy)
+
 ```
 
 
@@ -110,10 +199,9 @@ After running your algorithm, check if the trades were executed as expected. Cal
 
 
 ```r
-# Fill your code here and Disucss
+On 14 February 2022, AMD acquired Xilinx for $35 billion dollars. This resulted in a decrease in profit by $2220636, from $383555 in my first strategy to -1837081 in my second strategy. In addition, ROI decreased by 120.60515%, with my first strategy yielding an ROI of 20.83128% and my stop loss mechanism yielding an ROI of -99.77387%. This is likely due to the costly acquisition and highly significant costs resulting from operational adjustments when Xilinx was acquired.
 ```
 
-Sample Discussion: On Wednesday, December 6, 2023, AMD CEO Lisa Su discussed a new graphics processor designed for AI servers, with Microsoft and Meta as committed users. The rise in AMD shares on the following Thursday suggests that investors believe in the chipmaker's upward potential and market expectations; My first strategy earned X dollars more than second strategy on this day, therefore providing a better ROI.
 
 
 
