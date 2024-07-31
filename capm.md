@@ -145,3 +145,46 @@ ggplot(df,aes(x=GSPC_Excess_returns, y = AMD_Excess_returns))+
   geom_smooth(method="lm", se=TRUE)+
   labs(title="Relationship between AMD Excess Returns and S&P500 Excess Returns",x="S&P500 Excess Returns" , y = "AMD Excess Returns")
 ```
+### Step 3: Predictions Interval
+Suppose the current risk-free rate is 5.0%, and the annual expected return for the S&P 500 is 13.3%. Determine a 90% prediction interval for AMD's annual expected return.
+
+*Hint: Calculate the daily standard error of the forecast ($s_f$), and assume that the annual standard error for prediction is $s_f \times \sqrt{252}$. Use the simple return average method to convert daily stock returns to annual returns if needed.*
+
+
+**Answer:**
+
+```{r pi}
+#Given in question
+RF<- 0.05
+annual_market_return<- 0.133
+#From previous parts
+beta<- 1.57003
+#Risk free rate & Market Return (daily)
+daily_riskfree_rate<- (1+RF/100)^(1/360)-1
+daily_market_return<- annual_market_return/252
+
+Xf<- daily_market_return - daily_riskfree_rate
+
+#Calculate the mean GSPC value
+mean_gspc<-mean(df$GSPC_Excess_returns,na.rm=TRUE)
+#Calculate SSX using sum of squares
+SSX <- sum((df$GSPC_Excess_returns-mean_gspc)^2,na.rm=TRUE)
+#Obtain s_e
+s_e<- summary(model)$sigma
+
+#To obtain daily and annualised standard error of the forecast
+n<- length(df$Date)
+daily_sf<- s_e*sqrt(1+1/n+(Xf-mean_gspc)^2/SSX)
+annual_sf<- daily_sf * sqrt(252)
+
+#Since it has 90% prediction interval
+alpha <- 0.1
+t_value<- qt(1-alpha/2,df = n-2)
+AMD_annual_returns<- RF+beta*(annual_market_return-RF)
+
+#interval
+lower_bound <- AMD_annual_returns - t_value*annual_sf
+upper_bound <- AMD_annual_returns + t_value* annual_sf
+print(lower_bound)
+print(upper_bound)
+```
